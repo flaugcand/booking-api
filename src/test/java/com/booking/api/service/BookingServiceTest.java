@@ -101,14 +101,14 @@ public class BookingServiceTest {
 	}
 	
 	@Test
-	public void testCreateBookingPeriodBlockedShouldThrowNotAcceptable() {
+	public void testCreateBookingPeriodBlockedShouldThrowConflictException() {
 		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build();
 		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class))).thenReturn(Collections.singletonList(Block.builder().id(1L)
 				.startDate(LocalDate.of(2023, 11, 8)).endDate(LocalDate.of(2023, 11, 25)).build()));
 		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class)))
 				.thenReturn(Collections.emptyList());
-		assertThrows(NotAcceptableException.class, () -> {
+		assertThrows(ConflictException.class, () -> {
 			bookingService.createBooking(bookedDTO);
 		});
 	}
