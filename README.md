@@ -15,7 +15,7 @@ Follow these steps to run the Booking API Spring Boot project:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/booking-api.git
+   git clone https://github.com/flaugcand/booking-api/booking-api.git
    
    
 2. **Access the project directory:**
