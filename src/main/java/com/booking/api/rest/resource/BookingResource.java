@@ -1,5 +1,6 @@
 package com.booking.api.rest.resource;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,10 +14,10 @@ import com.booking.api.rest.dto.BookingDTO;
 @RequestMapping("/booking")
 public interface BookingResource {
 
-	@PostMapping
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	ResponseEntity<?> createBooking(@RequestBody BookingDTO block);
 
-	@PutMapping(path = "/{id}")
+	@PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
 	ResponseEntity<?> updateBooking(@PathVariable("id") Long id, @RequestBody BookingDTO block);
 	
 	@DeleteMapping(path = "/{id}")
