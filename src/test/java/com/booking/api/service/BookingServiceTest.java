@@ -21,6 +21,7 @@ import com.booking.api.domain.model.Block;
 import com.booking.api.domain.model.Booking;
 import com.booking.api.domain.model.repository.BlockRepository;
 import com.booking.api.domain.model.repository.BookingRepository;
+import com.booking.api.exception.ConflictException;
 import com.booking.api.exception.NotAcceptableException;
 import com.booking.api.exception.NotFoundException;
 import com.booking.api.rest.dto.BookingDTO;
@@ -88,13 +89,13 @@ public class BookingServiceTest {
 	}
 
 	@Test
-	public void testCreateBookingBookedPeriodShouldThrowNotAcceptable() {
+	public void testCreateBookingBookedPeriodShouldThrowConflict() {
 		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build();
 		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class)))
 				.thenReturn(Collections.singletonList(Booking.builder().id(1L).guestName("Guest Name")
 						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
-		assertThrows(NotAcceptableException.class, () -> {
+		assertThrows(ConflictException.class, () -> {
 			bookingService.createBooking(bookedDTO);
 		});
 	}
@@ -196,7 +197,7 @@ public class BookingServiceTest {
 	}
 	
 	@Test
-	public void testUpdateBookingPeriodBlockedShouldThrowNotAcceptable() {
+	public void testUpdateBookingPeriodBlockedShouldThrowConflict() {
 		Long existingBookingId = 1L;
 		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build();
@@ -204,7 +205,7 @@ public class BookingServiceTest {
 				.startDate(LocalDate.of(2023, 11, 8)).endDate(LocalDate.of(2023, 11, 25)).build()));
 		when(bookingRepository.findById(existingBookingId)).thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build()));
-		assertThrows(NotAcceptableException.class, () -> {
+		assertThrows(ConflictException.class, () -> {
 			bookingService.updateBooking(existingBookingId, bookedDTO);
 		});
 	}
