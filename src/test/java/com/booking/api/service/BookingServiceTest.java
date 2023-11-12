@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,8 @@ import com.booking.api.domain.model.repository.BookingRepository;
 import com.booking.api.exception.ConflictException;
 import com.booking.api.exception.NotAcceptableException;
 import com.booking.api.exception.NotFoundException;
-import com.booking.api.rest.dto.BookingDTO;
+import com.booking.api.rest.dto.BookingRequestDTO;
+import com.booking.api.rest.dto.BookingResponseDTO;
 import com.booking.api.service.impl.BookingServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +36,7 @@ public class BookingServiceTest {
 	private BookingRepository bookingRepository;
 	@Mock
 	private BlockRepository blockRepository;
-	
+
 	private BookingService bookingService;
 
 	@BeforeEach
@@ -44,18 +46,22 @@ public class BookingServiceTest {
 
 	@Test
 	public void testCreateBookingValidInput() {
-		BookingDTO validDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
-		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class))).thenReturn(Collections.emptyList());
-		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class))).thenReturn(Collections.emptyList());
-		when(bookingRepository.save(any(Booking.class))).thenReturn(Booking.builder().id(1L).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build());
+		BookingRequestDTO validDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
+		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class)))
+				.thenReturn(Collections.emptyList());
+		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class)))
+				.thenReturn(Collections.emptyList());
+		when(bookingRepository.save(any(Booking.class))).thenReturn(Booking.builder().id(1L).guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build());
 		Long result = bookingService.createBooking(validDTO);
 		assertNotNull(result);
 	}
 
 	@Test
 	public void testCreateBookingStartDateAfterEndDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 22))
-				.endDate(LocalDate.of(2023, 11, 10)).build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 22)).endDate(LocalDate.of(2023, 11, 10)).build();
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.createBooking(invalidDTO);
 		});
@@ -63,8 +69,8 @@ public class BookingServiceTest {
 
 	@Test
 	public void testCreateBookingMissingStartDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").endDate(LocalDate.of(2023, 11, 22))
-				.build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.endDate(LocalDate.of(2023, 11, 22)).build();
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.createBooking(invalidDTO);
 		});
@@ -72,8 +78,8 @@ public class BookingServiceTest {
 
 	@Test
 	public void testCreateBookingMissingEndDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).build();
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.createBooking(invalidDTO);
 		});
@@ -81,7 +87,7 @@ public class BookingServiceTest {
 
 	@Test
 	public void testCreateBookingMissingGuestNameShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().startDate(LocalDate.of(2023, 11, 10))
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build();
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.createBooking(invalidDTO);
@@ -90,8 +96,8 @@ public class BookingServiceTest {
 
 	@Test
 	public void testCreateBookingBookedPeriodShouldThrowConflict() {
-		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build();
+		BookingRequestDTO bookedDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
 		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class)))
 				.thenReturn(Collections.singletonList(Booking.builder().id(1L).guestName("Guest Name")
 						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
@@ -99,26 +105,29 @@ public class BookingServiceTest {
 			bookingService.createBooking(bookedDTO);
 		});
 	}
-	
+
 	@Test
 	public void testCreateBookingPeriodBlockedShouldThrowConflictException() {
-		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build();
-		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class))).thenReturn(Collections.singletonList(Block.builder().id(1L)
-				.startDate(LocalDate.of(2023, 11, 8)).endDate(LocalDate.of(2023, 11, 25)).build()));
+		BookingRequestDTO bookedDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
+		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class)))
+				.thenReturn(Collections.singletonList(Block.builder().id(1L).startDate(LocalDate.of(2023, 11, 8))
+						.endDate(LocalDate.of(2023, 11, 25)).build()));
 		when(bookingRepository.findByPeriod(isNull(), any(LocalDate.class), any(LocalDate.class)))
 				.thenReturn(Collections.emptyList());
 		assertThrows(ConflictException.class, () -> {
 			bookingService.createBooking(bookedDTO);
 		});
 	}
-	
+
 	@Test
 	public void testUpdateBookingValidInput() {
-		BookingDTO updatedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
+		BookingRequestDTO updatedDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
 		Long existingBookingId = 1L;
-		when(bookingRepository.findById(existingBookingId)).thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build()));
+		when(bookingRepository.findById(existingBookingId))
+				.thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name")
+						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
 		assertDoesNotThrow(() -> {
 			bookingService.updateBooking(existingBookingId, updatedDTO);
 		});
@@ -126,7 +135,8 @@ public class BookingServiceTest {
 
 	@Test
 	public void testUpdateBookingBookingShouldThrowNotFound() {
-		BookingDTO updatedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))				.endDate(LocalDate.of(2023, 11, 22)).build();
+		BookingRequestDTO updatedDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
 		Long nonExistentBookingId = 99L;
 		when(bookingRepository.findById(nonExistentBookingId)).thenReturn(Optional.empty());
 
@@ -138,8 +148,8 @@ public class BookingServiceTest {
 
 	@Test
 	public void testUpdateBookingStartDateAfterEndDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 22))
-				.endDate(LocalDate.of(2023, 11, 10)).build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 22)).endDate(LocalDate.of(2023, 11, 10)).build();
 		Long existingBookingId = 1L;
 		when(bookingRepository.findById(existingBookingId))
 				.thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name")
@@ -148,10 +158,11 @@ public class BookingServiceTest {
 			bookingService.updateBooking(existingBookingId, invalidDTO);
 		});
 	}
-	
+
 	@Test
 	public void testUpdateBookingMissingStartDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 22)).build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 22)).build();
 		Long existingBookingId = 1L;
 		when(bookingRepository.findById(existingBookingId))
 				.thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name")
@@ -163,30 +174,34 @@ public class BookingServiceTest {
 
 	@Test
 	public void testUpdateBookingMissingEndDateShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().guestName("Guest Name").endDate(LocalDate.of(2023, 11, 10)).build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.endDate(LocalDate.of(2023, 11, 10)).build();
 		Long existingBookingId = 1L;
 		when(bookingRepository.findById(existingBookingId))
-		.thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name")
-				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
+				.thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name")
+						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.updateBooking(existingBookingId, invalidDTO);
 		});
 	}
-	
+
 	@Test
 	public void testUpdateBookingMissingGuestNameShouldThrowNotAcceptable() {
 		Long existingBookingId = 1L;
-		BookingDTO invalidDTO = BookingDTO.builder().startDate(LocalDate.of(2023, 11, 10))
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().startDate(LocalDate.of(2023, 11, 10))
 				.endDate(LocalDate.of(2023, 11, 22)).build();
-		when(bookingRepository.findById(existingBookingId)).thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
+		when(bookingRepository.findById(existingBookingId))
+				.thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name")
+						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
 		assertThrows(NotAcceptableException.class, () -> {
 			bookingService.updateBooking(existingBookingId, invalidDTO);
 		});
 	}
-	
+
 	@Test
 	public void testUpdateBookingBookedPeriodShouldThrowNotAcceptable() {
-		BookingDTO invalidDTO = BookingDTO.builder().startDate(LocalDate.of(2023, 11, 22)).startDate(LocalDate.of(2023, 11, 22)).build();
+		BookingRequestDTO invalidDTO = BookingRequestDTO.builder().startDate(LocalDate.of(2023, 11, 22))
+				.startDate(LocalDate.of(2023, 11, 22)).build();
 		Long existingBookingId = 1L;
 		when(bookingRepository.findById(existingBookingId))
 				.thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name")
@@ -195,26 +210,29 @@ public class BookingServiceTest {
 			bookingService.updateBooking(existingBookingId, invalidDTO);
 		});
 	}
-	
+
 	@Test
 	public void testUpdateBookingPeriodBlockedShouldThrowConflict() {
 		Long existingBookingId = 1L;
-		BookingDTO bookedDTO = BookingDTO.builder().guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build();
-		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class))).thenReturn(Collections.singletonList(Block.builder().id(1L)
-				.startDate(LocalDate.of(2023, 11, 8)).endDate(LocalDate.of(2023, 11, 25)).build()));
-		when(bookingRepository.findById(existingBookingId)).thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build()));
+		BookingRequestDTO bookedDTO = BookingRequestDTO.builder().guestName("Guest Name")
+				.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build();
+		when(blockRepository.findByPeriod(any(LocalDate.class), any(LocalDate.class)))
+				.thenReturn(Collections.singletonList(Block.builder().id(1L).startDate(LocalDate.of(2023, 11, 8))
+						.endDate(LocalDate.of(2023, 11, 25)).build()));
+		when(bookingRepository.findById(existingBookingId))
+				.thenReturn(Optional.of(Booking.builder().id(existingBookingId).guestName("Guest Name")
+						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
 		assertThrows(ConflictException.class, () -> {
 			bookingService.updateBooking(existingBookingId, bookedDTO);
 		});
 	}
-	
+
 	@Test
 	public void testCancelBookingValidInput() {
 		Long existingBookingId = 1L;
-		when(bookingRepository.findById(existingBookingId)).thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
-				.endDate(LocalDate.of(2023, 11, 22)).build()));
+		when(bookingRepository.findById(existingBookingId))
+				.thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name")
+						.startDate(LocalDate.of(2023, 11, 10)).endDate(LocalDate.of(2023, 11, 22)).build()));
 		assertDoesNotThrow(() -> {
 			bookingService.cancelBooking(existingBookingId);
 		});
@@ -229,6 +247,40 @@ public class BookingServiceTest {
 			bookingService.cancelBooking(nonExistentBookingId);
 		});
 
+	}
+
+	@Test
+	public void testFindAllBookings() {
+		when(bookingRepository.findAll()).thenReturn(Collections.singletonList(Booking.builder().id(1L).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
+				.endDate(LocalDate.of(2023, 11, 22)).build()));
+		List<BookingResponseDTO> findAll = bookingService.findAll();
+		assertNotNull(findAll);
+	}
+
+	@Test
+	public void testFindAllBookingsShouldThrowNotFound() {
+		when(bookingRepository.findAll()).thenReturn(Collections.emptyList());
+		assertThrows(NotFoundException.class, () -> {
+			bookingService.findAll();
+		});
+	}
+	
+	@Test
+	public void testFindById() {
+		Long existingId = 1L;
+		when(bookingRepository.findById(existingId)).thenReturn(Optional.of(Booking.builder().id(1L).guestName("Guest Name").startDate(LocalDate.of(2023, 11, 10))
+				.endDate(LocalDate.of(2023, 11, 22)).build()));
+		BookingResponseDTO findById = bookingService.findById(existingId);
+		assertNotNull(findById);
+	}
+
+	@Test
+	public void testFindByIdShouldThrowNotFound() {
+		Long existingId = 1L;
+		when(bookingRepository.findById(existingId)).thenReturn(Optional.empty());
+		assertThrows(NotFoundException.class, () -> {
+			bookingService.findById(existingId);
+		});
 	}
 
 }
