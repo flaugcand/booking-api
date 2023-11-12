@@ -62,12 +62,12 @@ public class BookingServiceImpl implements BookingService {
 
 		List<Booking> bookings = repository.findByPeriod(id, dto.getStartDate(), dto.getEndDate());
 		if (bookings != null && !bookings.isEmpty())
-			throw new NotAcceptableException("The selected period is busy");
+			throw new ConflictException("The selected period is busy");
 
 		List<Block> blocks = blockRepository.findByPeriod(dto.getStartDate(), dto.getEndDate());
 
 		if (blocks != null && !blocks.isEmpty())
-			throw new NotAcceptableException("This period is blocked");
+			throw new ConflictException("This period is blocked");
 	}
 
 	private ObjectMapper getMapper() {
