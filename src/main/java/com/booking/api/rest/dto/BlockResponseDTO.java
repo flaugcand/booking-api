@@ -3,6 +3,7 @@ package com.booking.api.rest.dto;
 import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,10 @@ import lombok.Setter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-public class BlockDTO {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class BlockResponseDTO {
+	
+	private Long Id;
 
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	private LocalDate startDate;
